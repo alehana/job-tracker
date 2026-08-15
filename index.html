@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Job Application Tracker</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f2f2f2;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.form-box {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 0 auto 20px auto;
+}
+
+.form-box input, .form-box select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.form-box button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.controls {
+  max-width: 500px;
+  margin: 0 auto 20px auto;
+  display: flex;
+  gap: 10px;
+}
+
+.controls input, .controls select {
+  flex: 1;
+  padding: 8px;
+}
+
+.stats {
+  max-width: 500px;
+  margin: 0 auto 20px auto;
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+table {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #4CAF50;
+  color: white;
+}
+
+button.small {
+  padding: 5px 10px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<h1>Job Application Tracker</h1>
+
+<div class="form-box">
+  <input type="text" id="companyInput" placeholder="Company Name">
+  <input type="text" id="titleInput" placeholder="Job Title">
+  <input type="date" id="dateInput">
+  <select id="statusInput">
+    <option value="Applied">Applied</option>
+    <option value="Interview">Interview</option>
+    <option value="Offer">Offer</option>
+    <option value="Rejected">Rejected</option>
+  </select>
+  <button onclick="addJob()">Add Job</button>
+</div>
+
+<div class="controls">
+  <input type="text" id="searchInput" placeholder="Search company or title" onkeyup="renderJobs()">
+  <select id="filterInput" onchange="renderJobs()">
+    <option value="All">All Status</option>
+    <option value="Applied">Applied</option>
+    <option value="Interview">Interview</option>
+    <option value="Offer">Offer</option>
+    <option value="Rejected">Rejected</option>
+  </select>
+</div>
+
+<div class="stats" id="statsBox"></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Company</th>
+      <th>Title</th>
+      <th>Date</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="jobTableBody"></tbody>
+</table>
+
+<script>
+var jobs = [];
+var editIndex = -1;
+
+function addJob() {
+  var company = document.getElementById("companyInput").value;
+  var title = document.getElementById("titleInput").value;
+  var date = document.getElementById("dateInput").value;
+  var status = document.getElementById("statusInput").value;
+
+  if (company === "" || title === "" || date === "") {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  if (editIndex === -1) {
+    jobs.push({ company: company, title: title, date: date, status: status });
+  } else {
+    jobs[editIndex] = { company: company, title: title, date: date, status: status };
+    editIndex = -1;
+  }
+
+  document.getElementById("companyInput").value = "";
+  document.getElementById("titleInput").value = "";
+  document.getElementById("dateInput").value = "";
+  document.getElementById("statusInput").value = "Applied";
+
+  renderJobs();
+}
+
+function deleteJob(index) {
+  jobs.splice(index, 1);
+  renderJobs();
+}
+
+function editJob(index) {
+  var job = jobs[index];
+  document.getElementById("companyInput").value = job.company;
+  document.getElementById("titleInput").value = job.title;
+  document.getElementById("dateInput").value = job.date;
+  document.getElementById("statusInput").value = job.status;
+  editIndex = index;
+}
+
+function renderJobs() {
+  var searchText = document.getElementById("searchInput").value.toLowerCase();
+  var filterStatus = document.getElementById("filterInput").value;
+
+  var tableBody = document.getElementById("jobTableBody");
+  tableBody.innerHTML = "";
+
+  for (var i = 0; i < jobs.length; i++) {
+    var job = jobs[i];
+
+    var matchesSearch = job.company.toLowerCase().includes(searchText) || job.title.toLowerCase().includes(searchText);
+    var matchesFilter = filterStatus === "All" || job.status === filterStatus;
+
+    if (matchesSearch && matchesFilter) {
+      var row = document.createElement("tr");
+      row.innerHTML =
+        "<td>" + job.company + "</td>" +
+        "<td>" + job.title + "</td>" +
+        "<td>" + job.date + "</td>" +
+        "<td>" + job.status + "</td>" +
+        "<td>" +
+        "<button class='small' onclick='editJob(" + i + ")'>Edit</button>" +
+        "<button class='small' onclick='deleteJob(" + i + ")'>Delete</button>" +
+        "</td>";
+      tableBody.appendChild(row);
+    }
+  }
+
+  updateStats();
+}
+
+function updateStats() {
+  var total = jobs.length;
+  var applied = 0;
+  var interview = 0;
+  var offer = 0;
+  var rejected = 0;
+
+  for (var i = 0; i < jobs.length; i++) {
+    if (jobs[i].status === "Applied") applied++;
+    if (jobs[i].status === "Interview") interview++;
+    if (jobs[i].status === "Offer") offer++;
+    if (jobs[i].status === "Rejected") rejected++;
+  }
+
+  document.getElementById("statsBox").innerHTML =
+    "Total: " + total + " | Applied: " + applied + " | Interview: " + interview + " | Offer: " + offer + " | Rejected: " + rejected;
+}
+
+renderJobs();
+</script>
+
+</body>
+</html>
